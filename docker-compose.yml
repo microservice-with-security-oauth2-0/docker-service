@@ -1,0 +1,98 @@
+version: "3.7"
+services:       
+    config-server:          
+        image: 852789123/microservice-docker-cloud-config-service:0.0.1-SNAPSHOT
+        container_name: config-server
+        build:
+          context: ./../cloud-config-service
+          dockerfile: Dockerfile
+        expose:
+          - 8888    
+        ports: 
+          - 8888:8888
+        networks:
+          - spring-cloud-network
+    discovery: 
+        image: 852789123/microservice-docker-cloud-discovery-eureka-server:0.0.1-SNAPSHOT
+        container_name: discovery
+        build:
+          context: ./../cloud-discovery-eureka-server
+          dockerfile: Dockerfile
+        expose:
+          - 8761
+        ports: 
+          - 8761:8761 
+        networks:
+          - spring-cloud-network
+        depends_on:
+          - config-server              
+        restart: on-failure
+    gateway:     
+        image: 852789123/microservice-docker-api-gateway-service:0.0.1-SNAPSHOT
+        container_name: gateway
+        build:
+          context: ./../api-gateway-service
+          dockerfile: Dockerfile
+        expose:
+          - 8762
+        ports: 
+          - 8762:8762
+        networks:
+          - spring-cloud-network
+        depends_on: 
+          - config-server
+          - discovery
+        restart: on-failure
+    auth:     
+        image: 852789123/microservice-docker-auth-service:0.0.1-SNAPSHOT
+        container_name: auth
+        build:
+          context: ./../auth-service
+          dockerfile: Dockerfile
+        expose:
+          - 9100
+        ports: 
+          - 9100:9100
+        depends_on: 
+          - config-server
+          - discovery
+        networks:
+          - spring-cloud-network        
+        restart: on-failure
+    gallery-service:     
+        container_name: gallery-service
+        image: 852789123/microservice-docker-gallery-microservice:0.0.1-SNAPSHOT
+        build:
+          context: ./../gallery-microservice
+          dockerfile: Dockerfile
+        expose:
+          - 8100
+        ports: 
+          - 8100:8100
+        networks:
+            - spring-cloud-network    
+        depends_on: 
+          - config-server
+          - discovery
+        restart: on-failure
+    image-service: 
+        depends_on: 
+          - config-server
+          - discovery
+        image: 852789123/microservice-docker-image-microservice:0.0.1-SNAPSHOT
+        container_name: image-service
+        build:
+          context: ./../image-microservice
+          dockerfile: Dockerfile
+        expose:
+          - 8200
+        ports: 
+          - 8200:8200        
+        restart: on-failure
+        networks:
+            - spring-cloud-network
+    
+networks:
+    spring-cloud-network:
+        driver: bridge
+
